@@ -1,5 +1,6 @@
 import { SignInResponse } from "./ServiceResponse";
 
+export type UserRoles = "STUDENT" | "TEACHER" | "COORDINATOR";
 export type User = SignInResponse;
 export type Paper = {
   id: string;
@@ -13,4 +14,5 @@ export type Paper = {
   createdAt: string;
   updatedAt: string;
   deletedAt: string;
+  role: UserRoles;
 };

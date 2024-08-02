@@ -1,4 +1,4 @@
-import { User, Paper } from "./Models";
+import { User, Paper, UserRoles } from "./Models";
 
 export type SignInResponse = {
   id: string;
@@ -6,6 +6,7 @@ export type SignInResponse = {
   email: string;
   enrollment: string;
   interestId: string | string[] | null;
+  role: UserRoles;
   token: string;
 };
 
@@ -21,7 +22,7 @@ export type CreateThemeResponse = {
   deletedAt: string;
 };
 
-export type GetStudentThemeResponse = Theme[];
+export type GetThemesResponse = Theme[];
 
 export type Theme = {
   id: string;
@@ -35,4 +36,15 @@ export type Theme = {
   deletedAt: string;
   paperProposition: Paper | null;
   paper: Paper | null;
+  interests: Interest[];
+};
+
+export type Interest = {
+  createdAt: string;
+  id: string;
+  ownerId: string;
+  text: string;
+  themeId: string;
+  updatedAt: string;
+  owner: User;
 };

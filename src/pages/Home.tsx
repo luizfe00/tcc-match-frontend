@@ -1,79 +1,110 @@
-import { useUserStore } from "../user/user.store";
-import { GetStudentThemeResponse } from "../interfaces";
 import { useQuery } from "@tanstack/react-query";
-import { getAllThemes } from "../services/themeService";
-import { getUserFirstName } from "@/utils/StringUtil";
+import {
+  getAllProfessorThemes,
+  getAllStudentThemes,
+  getUserThemes,
+} from "../services/themeService";
 import Navbar from "@/components/Navbar/Navbar";
-import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Card } from "@/components/ui/card";
-import { Pagination } from "@/components/ui/pagination";
-import PaginationContainer from "@/components/PaginationContainer/PaginationContainer";
+import {
+  ThemeContainerTitle,
+  ThemeSearchList,
+} from "@/components/ThemeContainer";
+import { useUserStore } from "@/user/user.store";
+import { OwnThemePresentation } from "@/components/ThemeContainer/OwnThemePresentation/OwnThemePresentation";
+import { useState } from "react";
+import { NewTheme } from "@/components/ThemeContainer/NewTheme/NewTheme";
+import { InterestList } from "@/components/ThemeContainer/InterestList/InterestList";
+import { getUserInterests } from "@/services/interestService";
 
 export default function HomePage() {
   const user = useUserStore((state) => state.user);
+  const [showNewThemeModal, setShowNewThemeModal] = useState(false);
 
-  const { isLoading, error, data } = useQuery<GetStudentThemeResponse>({
+  const { data } = useQuery({
     queryKey: ["studentThemes"],
-    queryFn: getAllThemes,
+    queryFn:
+      user?.role === "STUDENT" ? getAllProfessorThemes : getAllStudentThemes,
   });
+
+  const { data: userThemes } = useQuery({
+    queryKey: ["userThemes"],
+    queryFn: getUserThemes,
+  });
+
+  const { data: userInterests } = useQuery({
+    queryKey: ["userInterests"],
+    queryFn: getUserInterests,
+  });
+
+  const themeOptionActions = () => {
+    const options = [];
+    const addNewThemeAction = (
+      <Button
+        key="add-theme"
+        variant={"outline"}
+        size={"icon"}
+        className="rounded-full h-8 w-8"
+        onClick={() => setShowNewThemeModal(true)}
+      >
+        +
+      </Button>
+    );
+    if (!(user?.role === "STUDENT" && userThemes && userThemes?.length > 0))
+      options.push(addNewThemeAction);
+    return options;
+  };
 
   return (
     <div className="h-screen flex flex-col">
       <Navbar />
+      <NewTheme open={showNewThemeModal} onOpenChange={setShowNewThemeModal} />
       <div className="p-4 flex-1">
         <div className="grid grid-cols-5 gap-6 h-full">
           <div className="col-start-1 col-end-4 ">
-            <div className="h-8 flex items-center mb-1">
-              <span>Temas</span>
-            </div>
-            <Separator />
-            <div className="mt-2 flex flex-col gap-y-4">
-              <div className="flex w-full items-center space-x-2">
-                <Input
-                  type="email"
-                  placeholder="Buscar tema..."
-                  className="w-full"
+            <div className="flex flex-col h-full">
+              <ThemeContainerTitle label="Buscar Temas" />
+              <div className="mt-2 flex flex-col gap-y-4 grow">
+                <div className="flex w-full items-center space-x-2">
+                  <Input
+                    type="email"
+                    placeholder="Buscar tema..."
+                    className="w-full"
+                  />
+                </div>
+                <ThemeSearchList
+                  onPress={(theme) => console.log({ theme })}
+                  themes={data}
                 />
-                <Button type="submit">Buscar</Button>
-              </div>
-              <div className="flex flex-col h-full gap-y-2">
-                <ScrollArea className="flex-1">
-                  <div className="flex flex-col gap-y-4">
-                    {data?.map((theme) => (
-                      <Card
-                        key={theme.ownerId + theme.label}
-                        className="p-4 shadow-sm"
-                      >
-                        <div className="flex items-center gap-2">
-                          <span>{theme.owner.name}</span>
-                          <Separator orientation="vertical" className="h-4" />
-                          <span>{theme.label}</span>
-                        </div>
-                        <Separator className="mb-2" />
-                        <p>{theme.summary}</p>
-                      </Card>
-                    ))}
-                  </div>
-                </ScrollArea>
-                <PaginationContainer />
               </div>
             </div>
           </div>
           <div className="col-start-4 col-end-6">
-            <div className="flex items-center justify-between mb-1">
-              <span>Meus Temas</span>
-              <Button
-                variant={"outline"}
-                size={"icon"}
-                className="rounded-full h-8 w-8"
-              >
-                +
-              </Button>
+            <div className="flex flex-col h-full gap-2">
+              <div>
+                <ThemeContainerTitle
+                  label="Meus Temas"
+                  actions={themeOptionActions}
+                />
+                <div className="flex flex-col gap-y-4">
+                  {userThemes && userThemes?.length > 1 && (
+                    <Input
+                      type="email"
+                      placeholder="Buscar tema..."
+                      className="w-full"
+                    />
+                  )}
+                  {userThemes?.map((theme) => (
+                    <OwnThemePresentation key={theme.label} theme={theme} />
+                  ))}
+                </div>
+              </div>
+              <div>
+                <ThemeContainerTitle label="Meus Interesses" />
+                <InterestList interests={userInterests} />
+              </div>
             </div>
-            <Separator />
           </div>
         </div>
       </div>
